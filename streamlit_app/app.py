@@ -1,3 +1,4 @@
+import os
 import cv2
 import io
 import numpy as np
@@ -6,13 +7,19 @@ import tensorflow as tf
 import efficientnet.tfkeras as efn
 import streamlit as st
 
-st.set_page_config(page_title='Virtue', page_icon = 'assets/images/logo.png')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+st.set_page_config(page_title='Virtue', page_icon=os.path.join(BASE_DIR, 'assets/images/logo.png'))
 
 # Title and Description
 st.title("Virtue Image")
-st.write("Just Upload your Plant's Leaf Image and get predictions if the plant is healthy or not") 
+st.write("Just Upload your Plant's Leaf Image and get predictions if the plant is healthy or not")
 
-model = tf.keras.models.load_model('model.h5')
+@st.cache_resource
+def load_plant_model():
+    return tf.keras.models.load_model(os.path.join(BASE_DIR, 'model.h5'))
+
+model = load_plant_model()
 
 uploaded_file = st.file_uploader('Choose your image', type=['png', 'jpg'])
 
@@ -28,13 +35,13 @@ predictions_sol_vast = {0 : 'Choose disease-resistant varieties' , 1 : 'Practice
 if uploaded_file is not None:
     image = Image.open(io.BytesIO(uploaded_file.read()))
     st.image(image, use_column_width=True)
-    
+
     resized_image = np.array(image.resize((512,512)))/255. # Resize image and divide pixel number by 255. for having values between 0 and 1 (normalize it)
-    
+
     image_batch = resized_image[np.newaxis, :, :, :]
-    
+
     predictions_arr = model.predict(image_batch)
-    
+
     predictions = np.argmax(predictions_arr)
 
     result_text = f'The plant leaf {predictions_map[predictions]} with {int(predictions_arr[0][predictions]*100)}% Uncovered area'
@@ -51,7 +58,7 @@ if uploaded_file is not None:
         st.text(predictions_sol_vast[3])
         # Convert the image to OpenCV format
         cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            
+
         # Convert to grayscale
         gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
@@ -73,8 +80,8 @@ if uploaded_file is not None:
             # Draw a rectangle around the contour
             cv2.rectangle(cv_image, (x, y), (x+w, y+h), (0, 0, 255), 2)
                 # Show the image
-        st.image(cv_image, use_column_width=True)   
-        
+        st.image(cv_image, use_column_width=True)
+
 
     elif predictions == 2:
         st.error(result_text)
@@ -85,7 +92,7 @@ if uploaded_file is not None:
         st.text(predictions_sol_rust[3])
         # Convert the image to OpenCV format
         cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            
+
         # Convert to grayscale
         gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
@@ -107,8 +114,8 @@ if uploaded_file is not None:
             # Draw a rectangle around the contour
             cv2.rectangle(cv_image, (x, y), (x+w, y+h), (0, 0, 255), 2)
                 # Show the image
-        st.image(cv_image, use_column_width=True)   
-        
+        st.image(cv_image, use_column_width=True)
+
 
     else:
         st.error(result_text)
@@ -119,7 +126,7 @@ if uploaded_file is not None:
         st.text(predictions_sol_scap[3])
         # Convert the image to OpenCV format
         cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            
+
         # Convert to grayscale
         gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
@@ -142,5 +149,5 @@ if uploaded_file is not None:
             cv2.rectangle(cv_image, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
         # Show the image
-        st.image(cv_image, use_column_width=True)   
-        
+        st.image(cv_image, use_column_width=True)
+
